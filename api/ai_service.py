@@ -3,7 +3,35 @@ import json
 import re
 import requests
 
-BOOKLEAF_KNOWLEDGE_BASE = 
+BOOKLEAF_KNOWLEDGE_BASE = """
+BookLeaf Publishing Portal Operations Knowledge Base & Guidelines:
+
+1. Royalty & Payments Policy:
+   - 80/20 royalty split: Authors receive 80% of net profit, BookLeaf retains 20%.
+   - Net profit calculation: Net Profit = MRP minus print-on-demand manufacturing cost, platform commission, and shipping.
+   - Payout Schedule: Royalties are calculated quarterly and disbursed within 45 days of quarter end (Q1: May 15, Q2: Aug 15, Q3: Nov 15, Q4: Feb 15).
+   - Minimum Payout Threshold: Minimum ₹1,000 required for bank transfer. Balances under ₹1,000 carry forward to the next quarter.
+
+2. ISBN & Imprint Guidelines:
+   - Unique ISBNs are assigned under BookLeaf's registered imprint for each format (Paperback / Hardcover / eBook).
+   - ISBN, metadata, or barcode discrepancies are investigated and escalated with the national agency within 48 business hours.
+
+3. Printing & Physical Quality Standards:
+   - Print Turnaround: Standard printing takes 5–7 business days from print order placement.
+   - Damaged / Defective Copies: Author receives a 100% free reprint replacement upon submitting photo verification of the defective copies.
+   - Finish Options: Matte velvet or gloss lamination with 70–80 GSM natural shade paper.
+
+4. Distribution & Marketplace Availability:
+   - Channel Listings: New books go live on Amazon India, Flipkart, and the BookLeaf Store within 7–10 business days of final production sign-off.
+   - Out of Stock / Inventory Sync: Partner channel inventory updates and syncs occur automatically within 24–48 hours.
+
+5. Book Status & Production Pipeline:
+   - Production stages: 1) Manuscript Submission -> 2) Typesetting & Interior Formatting -> 3) Cover Design & Author Review -> 4) Proofreading & Final Edits -> 5) Published & Live.
+   - Author revisions during typesetting take 3–5 business days.
+
+6. Response Tone Guidelines:
+   - Empathetic, professional, specific with numbers/dates, collaborative, and solution-oriented.
+"""
 
 VALID_CATEGORIES = [
     'Royalty & Payments',
