@@ -30,14 +30,29 @@ class Command(BaseCommand):
                 {"id": "AUTH001", "name": "Priya Sharma", "email": "priya.sharma@email.com", "city": "Mumbai", "phone": "+91-98765-43210"},
                 {"id": "AUTH002", "name": "Rohit Kapoor", "email": "rohit.kapoor@email.com", "city": "Delhi", "phone": "+91-87654-32109"},
                 {"id": "AUTH003", "name": "Ananya Reddy", "email": "ananya.reddy@email.com", "city": "Hyderabad", "phone": "+91-76543-21098"},
-                {"id": "AUTH004", "name": "Vikram Malhotra", "email": "vikram.malhotra@email.com", "city": "Bangalore", "phone": "+91-65432-10987"},
-                {"id": "AUTH005", "name": "Sneha Patel", "email": "sneha.patel@email.com", "city": "Ahmedabad", "phone": "+91-54321-09876"},
-                {"id": "AUTH006", "name": "Arvind Swaminathan", "email": "arvind.swaminathan@email.com", "city": "Chennai", "phone": "+91-43210-98765"},
-                {"id": "AUTH007", "name": "Meera Nambiar", "email": "meera.nambiar@email.com", "city": "Kochi", "phone": "+91-32109-87654"},
-                {"id": "AUTH008", "name": "Kabir Mehta", "email": "kabir.mehta@email.com", "city": "Pune", "phone": "+91-21098-76543"},
-                {"id": "AUTH009", "name": "Sunita Deshmukh", "email": "sunita.deshmukh@email.com", "city": "Nagpur", "phone": "+91-10987-65432"},
-                {"id": "AUTH010", "name": "Tanmay Joshi", "email": "tanmay.joshi@email.com", "city": "Jaipur", "phone": "+91-99887-76655"},
+                {"id": "AUTH004", "name": "Vikram Joshi", "email": "vikram.joshi@email.com", "city": "Pune", "phone": "+91-65432-10987"},
+                {"id": "AUTH005", "name": "Meera Nair", "email": "meera.nair@email.com", "city": "Kochi", "phone": "+91-54321-09876"},
+                {"id": "AUTH006", "name": "Arjun Malhotra", "email": "arjun.malhotra@email.com", "city": "Chandigarh", "phone": "+91-43210-98765"},
+                {"id": "AUTH007", "name": "Sneha Kulkarni", "email": "sneha.kulkarni@email.com", "city": "Bangalore", "phone": "+91-32109-87654"},
+                {"id": "AUTH008", "name": "Farhan Sheikh", "email": "farhan.sheikh@email.com", "city": "Lucknow", "phone": "+91-21098-76543"},
+                {"id": "AUTH009", "name": "Kavita Deshmukh", "email": "kavita.deshmukh@email.com", "city": "Nagpur", "phone": "+91-10987-65432"},
+                {"id": "AUTH010", "name": "Diya Chatterjee", "email": "diya.chatterjee@email.com", "city": "Kolkata", "phone": "+91-09876-54321"},
             ]
+
+            alias_authors = [
+                ("vikram.malhotra@email.com", "Vikram Malhotra"),
+                ("sneha.patel@email.com", "Sneha Patel"),
+                ("arvind.swaminathan@email.com", "Arvind Swaminathan"),
+                ("meera.nambiar@email.com", "Meera Nambiar"),
+                ("kabir.mehta@email.com", "Kabir Mehta"),
+                ("sunita.deshmukh@email.com", "Sunita Deshmukh"),
+                ("tanmay.joshi@email.com", "Tanmay Joshi"),
+            ]
+            for a_email, a_name in alias_authors:
+                au, _ = User.objects.get_or_create(email=a_email, defaults={'name': a_name, 'role': 'author'})
+                au.name = a_name
+                au.set_password("password123")
+                au.save()
 
             author_objs = {}
             for ad in authors_data:
