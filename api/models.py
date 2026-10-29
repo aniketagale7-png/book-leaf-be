@@ -3,9 +3,6 @@ from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
 from django.utils import timezone
 
-# ==========================================
-# Custom User Manager
-# ==========================================
 class UserManager(BaseUserManager):
     def create_user(self, email, name, password=None, role='author', **extra_fields):
         if not email:
@@ -28,9 +25,7 @@ class UserManager(BaseUserManager):
 def generate_user_id():
     return str(uuid.uuid4())
 
-# ==========================================
-# 1. User Model
-# ==========================================
+
 class User(AbstractBaseUser, PermissionsMixin):
     ROLE_CHOICES = (
         ('author', 'Author'),
@@ -59,11 +54,8 @@ class User(AbstractBaseUser, PermissionsMixin):
         return f"{self.email} ({self.role})"
 
 
-# ==========================================
-# 2. Author Model
-# ==========================================
 class Author(models.Model):
-    author_id = models.CharField(max_length=20, primary_key=True)  # e.g. AUTH001
+    author_id = models.CharField(max_length=20, primary_key=True)
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='author_profile')
     name = models.CharField(max_length=255)
     email = models.EmailField()
@@ -80,9 +72,6 @@ class Author(models.Model):
         return f"{self.author_id} - {self.name}"
 
 
-# ==========================================
-# 3. Book Model
-# ==========================================
 class Book(models.Model):
     STATUS_CHOICES = (
         ('In Production - Typesetting', 'In Production - Typesetting'),
@@ -92,15 +81,13 @@ class Book(models.Model):
         ('Out of Print', 'Out of Print'),
     )
 
-    book_id = models.CharField(max_length=20, primary_key=True)  # e.g. BK001
+    book_id = models.CharField(max_length=20, primary_key=True)
     author = models.ForeignKey(Author, on_delete=models.CASCADE, related_name='books')
     title = models.CharField(max_length=255)
     isbn = models.CharField(max_length=50, blank=True, null=True)
     genre = models.CharField(max_length=100, default='General Fiction')
     publication_date = models.DateField(blank=True, null=True)
     status = models.CharField(max_length=100, choices=STATUS_CHOICES, default='In Production - Typesetting')
-    
-    # Financial & Sales Information
     mrp = models.DecimalField(max_digits=10, decimal_places=2, default=299.00)
     author_royalty_per_copy = models.DecimalField(max_digits=10, decimal_places=2, default=50.00)
     total_copies_sold = models.IntegerField(default=0)
@@ -108,8 +95,6 @@ class Book(models.Model):
     royalty_paid = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
     royalty_pending = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
     last_royalty_payout_date = models.DateField(blank=True, null=True)
-    
-    # Distribution Information
     print_partner = models.CharField(max_length=150, default='BookLeaf Express Print')
     available_on = models.JSONField(default=list, blank=True)
 
@@ -122,9 +107,6 @@ class Book(models.Model):
         return f"{self.book_id} - {self.title}"
 
 
-# ==========================================
-# 4. Support Ticket Model
-# ==========================================
 class Ticket(models.Model):
     CATEGORY_CHOICES = (
         ('Royalty & Payments', 'Royalty & Payments'),
@@ -149,7 +131,7 @@ class Ticket(models.Model):
         ('Closed', 'Closed'),
     )
 
-    id = models.CharField(max_length=50, primary_key=True)  # e.g., TKT-2026-1001
+    id = models.CharField(max_length=50, primary_key=True)
     author = models.ForeignKey(Author, on_delete=models.CASCADE, related_name='tickets')
     book = models.ForeignKey(Book, on_delete=models.SET_NULL, null=True, blank=True, related_name='tickets')
     subject = models.CharField(max_length=255)
@@ -160,12 +142,9 @@ class Ticket(models.Model):
     assigned_to = models.CharField(max_length=150, null=True, blank=True)
     attachment_name = models.CharField(max_length=255, null=True, blank=True)
     attachment_size = models.CharField(max_length=50, null=True, blank=True)
-    
-    # AI-Assisted Operations Desk Fields
     ai_draft_content = models.TextField(null=True, blank=True)
     ai_source_policies = models.JSONField(default=list, blank=True)
     ai_confidence_score = models.FloatField(null=True, blank=True)
-
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -177,9 +156,6 @@ class Ticket(models.Model):
         return f"{self.id} - {self.subject}"
 
 
-# ==========================================
-# 5. Ticket Message (Communication Thread)
-# ==========================================
 class TicketMessage(models.Model):
     ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name='messages')
     sender_type = models.CharField(max_length=20, choices=(('author', 'Author'), ('admin', 'Admin')))
@@ -196,9 +172,6 @@ class TicketMessage(models.Model):
         return f"{self.ticket_id} - {self.sender_name}: {self.content[:30]}"
 
 
-# ==========================================
-# 6. Internal Note (Admin Operations Only)
-# ==========================================
 class InternalNote(models.Model):
     ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name='internal_notes')
     admin_name = models.CharField(max_length=255)

@@ -1,12 +1,3 @@
-"""
-Django Management Command: seed_sample_data
-Seeds the official BookLeaf technical assignment dataset:
-- 1 Admin Account (Devansh Joshi)
-- 10 Author Accounts (AUTH001 - AUTH010)
-- 18 Books (BK001 - BK018)
-- Initial Support Tickets with AI drafts and communication threads
-"""
-
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from api.models import User, Author, Book, Ticket, TicketMessage, InternalNote
@@ -22,9 +13,6 @@ class Command(BaseCommand):
         self.stdout.write(self.style.NOTICE("=================================================="))
 
         with transaction.atomic():
-            # ----------------------------------------------------
-            # 1. Admin Account
-            # ----------------------------------------------------
             admin_user, _ = User.objects.get_or_create(
                 email="admin@bookleaf.com",
                 defaults={
@@ -38,9 +26,6 @@ class Command(BaseCommand):
             admin_user.save()
             self.stdout.write(self.style.SUCCESS("[✓] Admin Account: admin@bookleaf.com (Devansh Joshi)"))
 
-            # ----------------------------------------------------
-            # 2. 10 Author Accounts
-            # ----------------------------------------------------
             authors_data = [
                 {"id": "AUTH001", "name": "Priya Sharma", "email": "priya.sharma@email.com", "city": "Mumbai", "phone": "+91-98765-43210"},
                 {"id": "AUTH002", "name": "Rohit Kapoor", "email": "rohit.kapoor@email.com", "city": "Delhi", "phone": "+91-87654-32109"},
@@ -85,11 +70,7 @@ class Command(BaseCommand):
 
             self.stdout.write(self.style.SUCCESS("[✓] All 10 Author Accounts Seeded."))
 
-            # ----------------------------------------------------
-            # 3. 18 Books Seeding
-            # ----------------------------------------------------
             books_data = [
-                # Priya Sharma (AUTH001)
                 {
                     "book_id": "BK001", "author_id": "AUTH001",
                     "title": "Whispers of the Ganges", "isbn": "978-81-923456-7-8", "genre": "Contemporary Fiction",
@@ -106,7 +87,6 @@ class Command(BaseCommand):
                     "royalty_paid": 5000.00, "royalty_pending": 2600.00, "print_partner": "BookLeaf Express Print",
                     "available_on": ["BookLeaf Store", "Amazon", "Flipkart"]
                 },
-                # Rohit Kapoor (AUTH002)
                 {
                     "book_id": "BK003", "author_id": "AUTH002",
                     "title": "Code & Karma", "isbn": "978-81-934567-0-1", "genre": "Tech & Philosophy",
@@ -123,7 +103,6 @@ class Command(BaseCommand):
                     "royalty_paid": 0.00, "royalty_pending": 0.00, "print_partner": "BookLeaf Express Print",
                     "available_on": ["BookLeaf Store"]
                 },
-                # Ananya Reddy (AUTH003)
                 {
                     "book_id": "BK005", "author_id": "AUTH003",
                     "title": "Cyber City Blues", "isbn": "978-81-945678-2-2", "genre": "Crime & Mystery",
@@ -140,7 +119,6 @@ class Command(BaseCommand):
                     "royalty_paid": 4500.00, "royalty_pending": 2000.00, "print_partner": "BookLeaf Express Print",
                     "available_on": ["BookLeaf Store", "Amazon", "Flipkart"]
                 },
-                # Vikram Malhotra (AUTH004)
                 {
                     "book_id": "BK007", "author_id": "AUTH004",
                     "title": "Silicon Valley Desi", "isbn": "978-81-956789-4-3", "genre": "Memoir / Non-Fiction",
@@ -157,7 +135,6 @@ class Command(BaseCommand):
                     "royalty_paid": 0.00, "royalty_pending": 0.00, "print_partner": "BookLeaf Express Print",
                     "available_on": ["BookLeaf Store"]
                 },
-                # Sneha Patel (AUTH005)
                 {
                     "book_id": "BK009", "author_id": "AUTH005",
                     "title": "Dhandha: The Gujarati Way", "isbn": "978-81-967890-6-4", "genre": "Business & Finance",
@@ -174,7 +151,6 @@ class Command(BaseCommand):
                     "royalty_paid": 2500.00, "royalty_pending": 900.00, "print_partner": "BookLeaf Express Print",
                     "available_on": ["BookLeaf Store", "Amazon"]
                 },
-                # Arvind Swaminathan (AUTH006)
                 {
                     "book_id": "BK011", "author_id": "AUTH006",
                     "title": "Filter Coffee & Carnatic", "isbn": "978-81-978901-8-5", "genre": "Culture & Arts",
@@ -191,7 +167,6 @@ class Command(BaseCommand):
                     "royalty_paid": 0.00, "royalty_pending": 0.00, "print_partner": "BookLeaf Express Print",
                     "available_on": ["BookLeaf Store"]
                 },
-                # Meera Nambiar (AUTH007)
                 {
                     "book_id": "BK013", "author_id": "AUTH007",
                     "title": "Backwaters & Beyond", "isbn": "978-81-989012-0-8", "genre": "Travelogue",
@@ -208,7 +183,6 @@ class Command(BaseCommand):
                     "royalty_paid": 0.00, "royalty_pending": 0.00, "print_partner": "BookLeaf Express Print",
                     "available_on": ["BookLeaf Store"]
                 },
-                # Kabir Mehta (AUTH008)
                 {
                     "book_id": "BK015", "author_id": "AUTH008",
                     "title": "Maratha Shadows", "isbn": "978-81-990123-2-2", "genre": "Historical Thriller",
@@ -225,7 +199,6 @@ class Command(BaseCommand):
                     "royalty_paid": 12000.00, "royalty_pending": 3750.00, "print_partner": "BookLeaf Express Print",
                     "available_on": ["BookLeaf Store", "Amazon", "Flipkart"]
                 },
-                # Sunita Deshmukh (AUTH009)
                 {
                     "book_id": "BK017", "author_id": "AUTH009",
                     "title": "Orange City Stories", "isbn": "978-81-991234-4-6", "genre": "Social Realism",
@@ -234,7 +207,6 @@ class Command(BaseCommand):
                     "royalty_paid": 3500.00, "royalty_pending": 1000.00, "print_partner": "BookLeaf Express Print",
                     "available_on": ["BookLeaf Store", "Amazon"]
                 },
-                # Tanmay Joshi (AUTH010)
                 {
                     "book_id": "BK018", "author_id": "AUTH010",
                     "title": "The Pink City Mirage", "isbn": "978-81-992345-5-3", "genre": "Mystery & Detective",
@@ -285,9 +257,6 @@ class Command(BaseCommand):
 
             self.stdout.write(self.style.SUCCESS("[✓] All 18 Official Books Seeded."))
 
-            # ----------------------------------------------------
-            # 4. Realistic Support Tickets with AI Drafts
-            # ----------------------------------------------------
             tickets_seed = [
                 {
                     "id": "TKT-2026-1001",
@@ -374,7 +343,6 @@ class Command(BaseCommand):
                     }
                 )
                 if created:
-                    # Initial message from author
                     TicketMessage.objects.create(
                         ticket=t,
                         sender_type='author',
@@ -382,7 +350,6 @@ class Command(BaseCommand):
                         sender_role='Author',
                         content=td['description']
                     )
-                    # If in progress, add reply from admin
                     if td['status'] == 'In Progress':
                         TicketMessage.objects.create(
                             ticket=t,
@@ -397,7 +364,6 @@ class Command(BaseCommand):
                             note='Internal verification initiated. Escalated with logistics/finance.'
                         )
 
-                    # Generate initial AI Draft
                     draft_res = generate_ai_draft_response(t, author_name=td['author'].name, book_title=book.title if book else "")
                     t.ai_draft_content = draft_res['draft_content']
                     t.ai_source_policies = draft_res['source_policies']

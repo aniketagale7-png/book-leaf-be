@@ -31,12 +31,8 @@ from .serializers import (
     LoginSerializer
 )
 
-
-# ==========================================
-# Helper Functions for ID Generation
-# ==========================================
 def get_next_author_id():
-    """Generates next author_id like AUTH001, AUTH002, etc."""
+
     authors = Author.objects.filter(author_id__startswith='AUTH')
     max_num = 0
     for a in authors:
@@ -48,9 +44,8 @@ def get_next_author_id():
     next_num = max_num + 1
     return f"AUTH{next_num:03d}"
 
-
 def get_next_book_id():
-    """Generates next book_id like BK001, BK002, etc."""
+
     books = Book.objects.filter(book_id__startswith='BK')
     max_num = 0
     for b in books:
@@ -62,9 +57,8 @@ def get_next_book_id():
     next_num = max_num + 1
     return f"BK{next_num:03d}"
 
-
 def get_next_ticket_id():
-    """Generates next ticket_id like TKT-2026-1001, TKT-2026-1002, etc."""
+
     year = timezone.now().year
     prefix = f"TKT-{year}-"
     tickets = Ticket.objects.filter(id__startswith=prefix)
@@ -78,23 +72,10 @@ def get_next_ticket_id():
             pass
     return f"{prefix}{max_num + 1}"
 
-
-# ==========================================
-# 1. Register API
-# POST /api/v1/auth/register
-# ==========================================
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def register(request):
-    """
-    Author Registration API
-    - Validates input & unique email
-    - Hashes password
-    - Generates sequential author_id (e.g. AUTH002)
-    - Creates Author record
-    - Creates Debut Book in 'In Production - Typesetting' status
-    - Returns JWT tokens + user profile
-    """
+
     serializer = RegisterSerializer(data=request.data)
     if not serializer.is_valid():
         return Response({
@@ -110,7 +91,6 @@ def register(request):
     city = data.get('city', '')
     phone = data.get('phone', '')
 
-    # Check unique email
     if User.objects.filter(email=email).exists():
         return Response({
             "error": "Email already exists",
@@ -118,7 +98,6 @@ def register(request):
         }, status=status.HTTP_400_BAD_REQUEST)
 
     with transaction.atomic():
-        # 1. Create User
         user = User.objects.create_user(
             email=email,
             name=name,
@@ -126,7 +105,6 @@ def register(request):
             role='author'
         )
 
-        # 2. Generate Author ID and create Author profile
         author_id = get_next_author_id()
         author = Author.objects.create(
             author_id=author_id,
@@ -137,7 +115,6 @@ def register(request):
             city=city
         )
 
-        # 3. Create initial debut book in "In Production - Typesetting"
         book_id = get_next_book_id()
         Book.objects.create(
             book_id=book_id,
@@ -151,9 +128,8 @@ def register(request):
             available_on=['BookLeaf Store', 'Amazon']
         )
 
-    # 4. Generate JWT Tokens
     refresh = RefreshToken.for_user(user)
-    
+
     return Response({
         "status": "success",
         "message": "Author registered successfully with debut book initialized.",
@@ -163,19 +139,10 @@ def register(request):
         "user": UserSerializer(user).data
     }, status=status.HTTP_201_CREATED)
 
-
-# ==========================================
-# 2. Single Unified Login API
-# POST /api/v1/auth/login
-# ==========================================
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def login(request):
-    """
-    Single Unified Login API: /api/v1/auth/login
-    Accepts: { "email": "...", "password": "..." }
-    Automatically detects user role (author or admin) and returns appropriate dashboard profile.
-    """
+
     serializer = LoginSerializer(data=request.data)
     if not serializer.is_valid():
         return Response({
@@ -204,21 +171,13 @@ def login(request):
         "user": UserSerializer(user).data
     }, status=status.HTTP_200_OK)
 
-
-# ==========================================
-# 3. Authenticated User Profile API
-# GET /api/v1/auth/me
-# ==========================================
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def me(request):
-    """
-    Returns current authenticated user details.
-    Requires: Bearer <access_token> in Authorization header
-    """
+
     user = request.user
     user_data = UserSerializer(user).data
-    
+
     extra_data = {}
     if hasattr(user, 'author_profile'):
         author = user.author_profile
@@ -232,22 +191,12 @@ def me(request):
         **extra_data
     }, status=status.HTTP_200_OK)
 
-
-# ==========================================
-# 4. Books Module: List & Create
-# GET  /api/v1/books
-# POST /api/v1/books
-# ==========================================
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
 def books_view(request):
-    """
-    GET  /api/v1/books: List books with role-based filtering, search, and status.
-    POST /api/v1/books: Create new book for logged-in author.
-    """
+
     user = request.user
 
-    # GET: List Books
     if request.method == 'GET':
         if user.role == 'author':
             if not hasattr(user, 'author_profile'):
@@ -276,7 +225,6 @@ def books_view(request):
         serializer = BookListSerializer(queryset.select_related('author').order_by('-book_id'), many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    # POST: Create New Book (Author only)
     elif request.method == 'POST':
         if user.role != 'author' or not hasattr(user, 'author_profile'):
             return Response({
@@ -309,15 +257,10 @@ def books_view(request):
 
         return Response(BookListSerializer(book).data, status=status.HTTP_201_CREATED)
 
-
-# ==========================================
-# 5. Single Book Detail API
-# GET /api/v1/books/<str:book_id>
-# ==========================================
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def book_detail(request, book_id):
-    """Get single book details by book_id."""
+
     book = Book.objects.filter(book_id=book_id).select_related('author').first()
     if not book:
         return Response({
@@ -335,15 +278,10 @@ def book_detail(request, book_id):
     serializer = BookListSerializer(book)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
-
-# ==========================================
-# 6. Author Dashboard Stats API
-# GET /api/v1/authors/me/dashboard
-# ==========================================
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def author_dashboard_stats(request):
-    """Returns aggregated portfolio & royalty metrics for the logged-in author."""
+
     user = request.user
     if user.role != 'author' or not hasattr(user, 'author_profile'):
         return Response({
@@ -386,22 +324,12 @@ def author_dashboard_stats(request):
     serializer = DashboardStatsSerializer(data)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
-
-# ==========================================
-# 7. Support Tickets Module: List & Create
-# GET  /api/v1/tickets
-# POST /api/v1/tickets
-# ==========================================
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
 def tickets_view(request):
-    """
-    GET  /api/v1/tickets: List support tickets with role filtering & search.
-    POST /api/v1/tickets: Create a new support ticket (Author only).
-    """
+
     user = request.user
 
-    # GET: List Tickets
     if request.method == 'GET':
         if user.role == 'author':
             if not hasattr(user, 'author_profile'):
@@ -415,7 +343,6 @@ def tickets_view(request):
         else:
             queryset = Ticket.objects.none()
 
-        # Query Filters
         status_param = request.query_params.get('status')
         if status_param:
             queryset = queryset.filter(status=status_param)
@@ -440,7 +367,6 @@ def tickets_view(request):
         serializer = TicketListSerializer(queryset.select_related('author', 'book'), many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    # POST: Create New Ticket (Author only)
     elif request.method == 'POST':
         if user.role != 'author' or not hasattr(user, 'author_profile'):
             return Response({
@@ -461,13 +387,11 @@ def tickets_view(request):
         subject = data['subject'].strip()
         description = data['description'].strip()
 
-        # Check optional book
         book = None
         book_id = data.get('book_id')
         if book_id:
             book = Book.objects.filter(book_id=book_id, author=author).first()
 
-        # AI Auto-Classification & Priority Scoring (with graceful fallback)
         from .ai_service import classify_and_score_ticket, generate_ai_draft_response
         ai_triage = classify_and_score_ticket(subject, description)
         category = data.get('category') or ai_triage.get('category', 'General Inquiry')
@@ -487,7 +411,6 @@ def tickets_view(request):
                 attachment_size=data.get('attachment_size')
             )
 
-            # Auto-create initial message in conversation thread
             TicketMessage.objects.create(
                 ticket=ticket,
                 sender_type='author',
@@ -496,7 +419,6 @@ def tickets_view(request):
                 content=description
             )
 
-            # Auto-generate initial AI Draft response grounded in BookLeaf Knowledge Base
             draft_info = generate_ai_draft_response(ticket, author_name=author.name, book_title=book.title if book else None)
             ticket.ai_draft_content = draft_info['draft_content']
             ticket.ai_source_policies = draft_info['source_policies']
@@ -506,19 +428,10 @@ def tickets_view(request):
         detail_serializer = TicketDetailSerializer(ticket, context={'request': request})
         return Response(detail_serializer.data, status=status.HTTP_201_CREATED)
 
-
-# ==========================================
-# 8. Single Ticket Details & Management API
-# GET   /api/v1/tickets/<str:ticket_id>
-# PATCH /api/v1/tickets/<str:ticket_id>
-# ==========================================
 @api_view(['GET', 'PATCH'])
 @permission_classes([IsAuthenticated])
 def ticket_detail_view(request, ticket_id):
-    """
-    GET   /api/v1/tickets/<ticket_id> - View full ticket thread & history
-    PATCH /api/v1/tickets/<ticket_id> - Update status, priority, or assigned admin
-    """
+
     user = request.user
     ticket = Ticket.objects.filter(id=ticket_id).select_related('author', 'book').first()
     if not ticket:
@@ -527,7 +440,6 @@ def ticket_detail_view(request, ticket_id):
             "message": f"Ticket with ID '{ticket_id}' does not exist."
         }, status=status.HTTP_404_NOT_FOUND)
 
-    # Permission check for Author
     if user.role == 'author':
         if not hasattr(user, 'author_profile') or ticket.author != user.author_profile:
             return Response({
@@ -535,12 +447,10 @@ def ticket_detail_view(request, ticket_id):
                 "message": "You do not have permission to access this ticket."
             }, status=status.HTTP_403_FORBIDDEN)
 
-    # GET: Retrieve full details
     if request.method == 'GET':
         serializer = TicketDetailSerializer(ticket, context={'request': request})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    # PATCH: Update ticket status / priority / assignment
     elif request.method == 'PATCH':
         serializer = TicketUpdateSerializer(data=request.data, partial=True)
         if not serializer.is_valid():
@@ -550,8 +460,7 @@ def ticket_detail_view(request, ticket_id):
             }, status=status.HTTP_400_BAD_REQUEST)
 
         data = serializer.validated_data
-        
-        # Author can only change status to 'Resolved' or 'Closed'
+
         if user.role == 'author':
             new_status = data.get('status')
             if new_status and new_status in ['Resolved', 'Closed']:
@@ -574,15 +483,10 @@ def ticket_detail_view(request, ticket_id):
         serializer = TicketDetailSerializer(ticket, context={'request': request})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-
-# ==========================================
-# 9. Ticket Communication Thread Messages
-# POST /api/v1/tickets/<str:ticket_id>/messages
-# ==========================================
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def ticket_messages_view(request, ticket_id):
-    """Post a reply to the ticket communication thread."""
+
     user = request.user
     ticket = Ticket.objects.filter(id=ticket_id).select_related('author').first()
     if not ticket:
@@ -591,7 +495,6 @@ def ticket_messages_view(request, ticket_id):
             "message": f"Ticket '{ticket_id}' not found."
         }, status=status.HTTP_404_NOT_FOUND)
 
-    # Author permission check
     if user.role == 'author':
         if not hasattr(user, 'author_profile') or ticket.author != user.author_profile:
             return Response({
@@ -619,7 +522,6 @@ def ticket_messages_view(request, ticket_id):
             content=content
         )
 
-        # If author replies to resolved ticket, re-open it
         if user.role == 'author' and ticket.status in ['Resolved', 'Closed']:
             ticket.status = 'In Progress'
         elif user.role == 'admin' and ticket.status == 'Open':
@@ -628,15 +530,10 @@ def ticket_messages_view(request, ticket_id):
 
     return Response(TicketMessageSerializer(message).data, status=status.HTTP_201_CREATED)
 
-
-# ==========================================
-# 10. Internal Notes (Admin Operations Only)
-# POST /api/v1/tickets/<str:ticket_id>/internal-notes
-# ==========================================
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def ticket_internal_notes_view(request, ticket_id):
-    """Add private internal operational note (Admin only)."""
+
     user = request.user
     if user.role != 'admin':
         return Response({
@@ -666,15 +563,10 @@ def ticket_internal_notes_view(request, ticket_id):
 
     return Response(InternalNoteSerializer(note).data, status=status.HTTP_201_CREATED)
 
-
-# ==========================================
-# 11. Admin Operations Desk Stats API
-# GET /api/v1/admin/operations/stats
-# ==========================================
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def operations_desk_stats_view(request):
-    """Returns overview metrics for the Operations Desk (Admin only)."""
+
     if request.user.role != 'admin':
         return Response({
             "error": "Forbidden",
@@ -693,15 +585,10 @@ def operations_desk_stats_view(request):
     serializer = OperationsDeskStatsSerializer(data)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
-
-# ==========================================
-# 12. Regenerate AI Draft API
-# POST /api/v1/tickets/<str:ticket_id>/generate-ai-draft
-# ==========================================
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def generate_ticket_ai_draft_view(request, ticket_id):
-    """Regenerates AI Draft response for a ticket on demand."""
+
     ticket = Ticket.objects.filter(id=ticket_id).select_related('author', 'book').first()
     if not ticket:
         return Response({
@@ -731,11 +618,6 @@ def generate_ticket_ai_draft_view(request, ticket_id):
         "ai_draft": draft_info
     }, status=status.HTTP_200_OK)
 
-
-# ==========================================
-# 13. Health Check API
-# GET /api/health/
-# ==========================================
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def health_check(request):

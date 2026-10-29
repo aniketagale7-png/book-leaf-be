@@ -1,43 +1,9 @@
-"""
-BookLeaf Publishing Portal - AI Operations Desk Service
-Provides AI Auto-Classification, Priority Scoring, and AI Draft Generation
-with BookLeaf Knowledge Base grounding.
-"""
-
 import os
 import json
 import re
 import requests
 
-BOOKLEAF_KNOWLEDGE_BASE = """
-BookLeaf Publishing Portal Operations Knowledge Base & Guidelines:
-
-1. Royalty & Payments Policy:
-   - 80/20 royalty split: Authors receive 80% of net profit, BookLeaf retains 20%.
-   - Net profit calculation: Net Profit = MRP minus print-on-demand manufacturing cost, platform commission, and shipping.
-   - Payout Schedule: Royalties are calculated quarterly and disbursed within 45 days of quarter end (Q1: May 15, Q2: Aug 15, Q3: Nov 15, Q4: Feb 15).
-   - Minimum Payout Threshold: Minimum ₹1,000 required for bank transfer. Balances under ₹1,000 carry forward to the next quarter.
-
-2. ISBN & Imprint Guidelines:
-   - Unique ISBNs are assigned under BookLeaf's registered imprint for each format (Paperback / Hardcover / eBook).
-   - ISBN, metadata, or barcode discrepancies are investigated and escalated with the national agency within 48 business hours.
-
-3. Printing & Physical Quality Standards:
-   - Print Turnaround: Standard printing takes 5–7 business days from print order placement.
-   - Damaged / Defective Copies: Author receives a 100% free reprint replacement upon submitting photo verification of the defective copies.
-   - Finish Options: Matte velvet or gloss lamination with 70–80 GSM natural shade paper.
-
-4. Distribution & Marketplace Availability:
-   - Channel Listings: New books go live on Amazon India, Flipkart, and the BookLeaf Store within 7–10 business days of final production sign-off.
-   - Out of Stock / Inventory Sync: Partner channel inventory updates and syncs occur automatically within 24–48 hours.
-
-5. Book Status & Production Pipeline:
-   - Production stages: 1) Manuscript Submission -> 2) Typesetting & Interior Formatting -> 3) Cover Design & Author Review -> 4) Proofreading & Final Edits -> 5) Published & Live.
-   - Author revisions during typesetting take 3–5 business days.
-
-6. Response Tone Guidelines:
-   - Empathetic, professional, specific with numbers/dates, collaborative, and solution-oriented.
-"""
+BOOKLEAF_KNOWLEDGE_BASE = 
 
 VALID_CATEGORIES = [
     'Royalty & Payments',
@@ -50,9 +16,8 @@ VALID_CATEGORIES = [
 
 VALID_PRIORITIES = ['Critical', 'High', 'Medium', 'Low']
 
-
 def get_ai_config():
-    """Reads AI configuration from environment variables."""
+
     api_key = os.getenv('AI_API_KEY', '').strip()
     provider = os.getenv('AI_PROVIDER', 'gemini').lower().strip()
     model = os.getenv('AI_MODEL', '').strip()
@@ -71,18 +36,10 @@ def get_ai_config():
         'model': model
     }
 
-
-# ============================================================================
-# 1. Fallback Rule-Based Classification (Graceful Fallback - 0 Downtime)
-# ============================================================================
 def fallback_classify_and_score(subject: str, description: str) -> dict:
-    """
-    Intelligent heuristic classifier when LLM API key is not configured
-    or external API encounters timeout/rate-limiting.
-    """
+
     text = f"{subject} {description}".lower()
 
-    # Priority determination
     if any(k in text for k in ['urgent', 'emergency', 'legal', 'lawsuit', 'unauthorized', 'halt', 'critical', 'copyright infringement']):
         priority = 'Critical'
     elif any(k in text for k in ['discrepancy', 'not received', 'wrong amount', 'missing copies', 'delayed by', 'unresolved', 'damaged batch']):
@@ -92,7 +49,6 @@ def fallback_classify_and_score(subject: str, description: str) -> dict:
     else:
         priority = 'Medium'
 
-    # Category determination
     if any(k in text for k in ['royalty', 'payout', 'payment', 'bank', 'earnings', 'neft', 'statement', 'sales report', 'threshold', '80/20']):
         category = 'Royalty & Payments'
     elif any(k in text for k in ['isbn', 'barcode', 'metadata', 'imprint', 'copyright', 'author name typo', 'blurb error']):
@@ -113,15 +69,8 @@ def fallback_classify_and_score(subject: str, description: str) -> dict:
         'source': 'Heuristic Classifier'
     }
 
-
-# ============================================================================
-# 2. AI Auto-Classification & Priority Scoring
-# ============================================================================
 def classify_and_score_ticket(subject: str, description: str) -> dict:
-    """
-    Classifies a support ticket into 1 of 6 categories and assigns priority score
-    using LLM API with graceful fallback.
-    """
+
     config = get_ai_config()
     api_key = config['api_key']
     provider = config['provider']
@@ -130,33 +79,7 @@ def classify_and_score_ticket(subject: str, description: str) -> dict:
     if not api_key:
         return fallback_classify_and_score(subject, description)
 
-    prompt = f"""You are an operations triage assistant for BookLeaf Publishing Portal.
-Classify this author support ticket into EXACTLY ONE of the allowed categories and assign a priority score.
-
-Allowed Categories:
-- Royalty & Payments
-- ISBN & Metadata Issues
-- Printing & Quality
-- Distribution & Availability
-- Book Status & Production Updates
-- General Inquiry
-
-Allowed Priorities:
-- Critical
-- High
-- Medium
-- Low
-
-Ticket Subject: {subject}
-Ticket Description: {description}
-
-Return ONLY valid JSON matching this schema:
-{{
-  "category": "<one of the allowed categories>",
-  "priority": "<one of the allowed priorities>",
-  "confidence_score": 0.95
-}}
-"""
+    prompt = f
 
     try:
         raw_text = ""
@@ -209,15 +132,8 @@ Return ONLY valid JSON matching this schema:
 
     return fallback_classify_and_score(subject, description)
 
-
-# ============================================================================
-# 3. Fallback Knowledge-Based Draft Generator
-# ============================================================================
 def fallback_generate_draft(category: str, subject: str, description: str, author_name: str, book_title: str) -> dict:
-    """
-    Generates a personalized, knowledge-grounded draft response when
-    LLM API is unreachable or key is not provided.
-    """
+
     name = author_name or "Author"
     book_ref = f" regarding '{book_title}'" if book_title else ""
 
@@ -304,15 +220,8 @@ def fallback_generate_draft(category: str, subject: str, description: str, autho
         'confidence_score': confidence
     }
 
-
-# ============================================================================
-# 4. AI-Drafted Response with BookLeaf Knowledge Base
-# ============================================================================
 def generate_ai_draft_response(ticket, author_name: str = None, book_title: str = None) -> dict:
-    """
-    Generates an empathetic, professional AI draft reply grounded in BookLeaf
-    policies, citing relevant guidelines and confidence score.
-    """
+
     name = author_name or (ticket.author.name if ticket.author else "Author")
     title = book_title or (ticket.book.title if ticket.book else "")
 
@@ -324,32 +233,9 @@ def generate_ai_draft_response(ticket, author_name: str = None, book_title: str 
     if not api_key:
         return fallback_generate_draft(ticket.category, ticket.subject, ticket.description, name, title)
 
-    system_instruction = f"""You are the senior Operations & Author Relations specialist at BookLeaf Publishing Portal.
-Draft an empathetic, highly professional, and specific response to the author's support ticket.
+    system_instruction = f
 
-GROUND TRUTH KNOWLEDGE BASE:
-{BOOKLEAF_KNOWLEDGE_BASE}
-
-GUIDELINES:
-1. Address the author by name: '{name}'.
-2. Mention the book title '{title}' if relevant.
-3. Be empathetic, transparent, and encouraging. Cite relevant BookLeaf policies (80/20 split, quarterly 45-day payout, ₹1,000 threshold, 5-7 days printing, 48h ISBN resolution, etc.) with specific timelines.
-4. Keep the response concise, polite, and reassuring.
-5. Provide a JSON response with:
-   - "draft_content": string (the full message body)
-   - "source_policies": list of string policy names used
-   - "confidence_score": float between 0.85 and 0.99
-"""
-
-    user_prompt = f"""Author Name: {name}
-Book Title: {title or 'N/A'}
-Ticket Category: {ticket.category}
-Ticket Priority: {ticket.priority}
-Subject: {ticket.subject}
-Description: {ticket.description}
-
-Provide the AI draft response in JSON format.
-"""
+    user_prompt = f
 
     try:
         raw_text = ""

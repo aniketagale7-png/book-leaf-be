@@ -1,9 +1,6 @@
 from rest_framework import serializers
 from .models import User, Author, Book, Ticket, TicketMessage, InternalNote
 
-# ==========================================
-# User Serializer
-# ==========================================
 class UserSerializer(serializers.ModelSerializer):
     author_id = serializers.SerializerMethodField()
 
@@ -17,18 +14,12 @@ class UserSerializer(serializers.ModelSerializer):
         return None
 
 
-# ==========================================
-# Author Serializer
-# ==========================================
 class AuthorSerializer(serializers.ModelSerializer):
     class Meta:
         model = Author
         fields = ['author_id', 'name', 'email', 'phone', 'city', 'joined_date']
 
 
-# ==========================================
-# Book Serializers
-# ==========================================
 class BookSerializer(serializers.ModelSerializer):
     class Meta:
         model = Book
@@ -77,9 +68,6 @@ class DashboardStatsSerializer(serializers.Serializer):
     next_payout_date = serializers.CharField()
 
 
-# ==========================================
-# Ticket & Communication Thread Serializers
-# ==========================================
 class TicketMessageSerializer(serializers.ModelSerializer):
     class Meta:
         model = TicketMessage
@@ -188,9 +176,6 @@ class OperationsDeskStatsSerializer(serializers.Serializer):
     critical_tickets = serializers.IntegerField()
 
 
-# ==========================================
-# Auth Request Serializers
-# ==========================================
 class RegisterSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=255, required=True)
     email = serializers.EmailField(required=True)
