@@ -99,8 +99,59 @@ AI_MODEL=gemini-1.5-flash # किंवा 'gpt-4o-mini'
 
 ---
 
-## 🚀 सर्व्हर कसा चालवायचा?
+## 🚀 स्थानिक पातळीवर सर्व्हर कसा चालवायचा? (Local Development)
 ```bash
 python manage.py runserver
 ```
 Angular Frontend (`http://localhost:4200`) वरून थेट या सर्व APIs कॉल करता येतील.
+
+---
+
+## 🌐 Render.com वर Production Deployment मार्गदर्शक (Step-by-Step)
+
+हा प्रोजेक्ट **Render.com** वर १-क्लिक किंवा मॅन्युअल डिप्लॉयमेंटसाठी १००% कॉन्फिगर केलेला आहे (`gunicorn`, `whitenoise`, `dj-database-url`, `render.yaml`, आणि `build.sh` समाविष्ट आहेत).
+
+### १. GitHub वर कोड पुश करा (Push to GitHub)
+```bash
+git remote add origin https://github.com/<तुमचे-username>/book-leaf-be.git
+git branch -M main
+git push -u origin main
+```
+
+### २. Render.com वर PostgreSQL Database तयार करा
+1. [Render Dashboard](https://dashboard.render.com/) उघडा.
+2. **New +** ➔ **PostgreSQL** निवडा.
+3. खालील तपशील भरा:
+   - **Name**: `bookleaf-db`
+   - **Database**: `bookleaf_db`
+   - **User**: `bookleaf_user`
+   - **Plan**: `Free`
+4. **Create Database** वर क्लिक करा.
+5. डेटाबेस तयार झाल्यावर त्या पेजवरील **"Internal Database URL"** कॉपी करून ठेवा.
+
+### ३. Render.com वर Web Service तयार करा
+1. **New +** ➔ **Web Service** निवडा.
+2. तुमचे GitHub Repository (`book-leaf-be`) सिलेक्ट करा.
+3. खालील सेटिंग्स करा:
+   - **Name**: `bookleaf-backend` (किंवा तुमच्या आवडीचे नाव)
+   - **Language / Runtime**: `Python`
+   - **Build Command**: `chmod +x build.sh && ./build.sh`
+   - **Start Command**: `gunicorn core.wsgi:application`
+   - **Plan**: `Free`
+4. खाली **Environment Variables** (प्रॉपर्टीज) जोडा:
+   - `DATABASE_URL` = *(पायरी २ मधील Internal Database URL पेस्ट करा)*
+   - `DEBUG` = `False`
+   - `ALLOWED_HOSTS` = `*`
+   - `SECRET_KEY` = `django-insecure-bookleaf-prod-secret-key-2026`
+   - `CORS_ALLOW_ALL_ORIGINS` = `True`
+   - *(पर्यायी)* `AI_API_KEY` = *(तुमचा Gemini/OpenAI API Key)*
+5. **Deploy Web Service** वर क्लिक करा.
+
+बिल्ड होताना `build.sh` आपोआप:
+- सर्व Python लायब्ररीज इन्स्टॉल करेल.
+- स्टॅटिक फाइल्स गोळा (`collectstatic`) करेल.
+- Postgres मध्ये सर्व टेबल्स (`migrate`) बनवेल.
+- सर्व १० ऑथर्स, १८ बुक्स आणि तिकिटे आपोआप सीड (`seed_sample_data`) करेल.
+
+डिप्लॉय पूर्ण झाल्यावर तुम्हाला तुमचे लाईव्ह बॅकएंड URL मिळेल:
+👉 `https://<तुमचा-सर्व्हिस-नेम>.onrender.com/api/v1/auth/login`
